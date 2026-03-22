@@ -5,7 +5,7 @@ from database.schemas import UserRegisterRequest, UserResponse
 from database.crud import create_user, get_user_by_email
 
 # Import routers
-from app.api import health, jobs
+from app.api import health, jobs, auth
 
 app = FastAPI(
     title="Multi-Agent Research Assistant API",
@@ -38,6 +38,7 @@ def get_password_hash(password: str) -> str:
 # ──────────────────────────────────────────────
 app.include_router(health.router)
 app.include_router(jobs.router)
+app.include_router(auth.router)
 
 # ──────────────────────────────────────────────
 # User Authentication Endpoints

@@ -126,3 +126,47 @@ def update_job_status(job_id: str, status: str, error_message: str = None, faile
     finally:
         conn.close()
 
+
+# ──────────────────────────────────────────────
+# AGENT OUTPUT & REPORT STORAGE
+# ──────────────────────────────────────────────
+
+def save_agent_output(job_id: str, agent_name: str, agent_output: str, stage: int = None):
+    """Save the output from an agent to the database."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO agent_outputs (job_id, agent_name, output, stage, created_at)
+                VALUES (%s, %s, %s, %s, NOW())
+                RETURNING id, job_id, agent_name, output, stage, created_at;
+            """, (job_id, agent_name, agent_output, stage))
+            result = cursor.fetchone()
+            conn.commit()
+            return result
+    except Exception as e:
+        conn.rollback()
+        raise Exception(f"Failed to save agent output: {str(e)}")
+    finally:
+        conn.close()
+
+
+def save_report(job_id: str, report_content: str, report_path: str = None):
+    """Save the final report to the database."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO reports (job_id, content, report_path, created_at)
+                VALUES (%s, %s, %s, NOW())
+                RETURNING id, job_id, content, report_path, created_at;
+            """, (job_id, report_content, report_path))
+            result = cursor.fetchone()
+            conn.commit()
+            return result
+    except Exception as e:
+        conn.rollback()
+        raise Exception(f"Failed to save report: {str(e)}")
+    finally:
+        conn.close()
+
