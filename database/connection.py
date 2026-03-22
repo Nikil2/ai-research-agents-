@@ -15,6 +15,18 @@ def get_connection():
     return conn
 
 
+def check_connection():
+    """Test if database connection is working."""
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        conn.close()
+        return True
+    except Exception as e:
+        return False
+
+
 def init_db():
     """Create all tables if they don't exist."""
     conn = get_connection()

@@ -1,0 +1,41 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: research_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: researchuser
+      POSTGRES_PASSWORD: researchpass
+      POSTGRES_DB: researchdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U researchuser -d researchdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: research_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://researchuser:researchpass@postgres:5432/researchdb
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      MCP_SERVER_URL: http://host.docker.internal:8001/sse
+      OUTPUT_DIR: /app/output/reports
+    volumes:
+      - ./output:/app/output    # share output folder
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
